@@ -1,0 +1,12 @@
+statGame
+game: 0
+balance: 0
+qiwi: 0
+giveqiwi: 0
+
+setting
+commision: 5
+refPers: 5
+
+
+
