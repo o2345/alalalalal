@@ -1,0 +1,58 @@
+from vkbottle.bot import Bot, Message
+from vkbottle.api.keyboard import Keyboard, Callback, OpenLink, Text
+import random
+
+bot = Bot( "79dc61954fd205672d5c81e159cfe29456be025a15619e82c8287b399881c54d0bf695423eeef692e79bc" )
+
+keyboard = Keyboard( one_time=False )
+keyboard.add_row()
+keyboard.add_button( Text( label="КНБ" ), color="positive" )
+
+knb = Keyboard( one_time=False )
+knb.add_row()
+knb.add_button( Text( label="Камень" ), color="positive" )
+knb.add_button( Text( label="Ножницы" ), color="primary" )
+knb.add_button( Text( label="Бумага" ) )
+knb.add_row()
+knb.add_button( Text( label="Назад" ), color="negative" )
+
+knb_chose = ['Камень', 'Ножницы', 'Бумага']
+
+
+@bot.on.message( text='КНБ', lower=True )
+async def knb(ans: Message):
+    await ans( 'Выберите вариант:', keyboard=knb )
+    await bot.branch.add( ans.peer_id, "knb" )
+
+
+@bot.branch.simple_branch( "knb" )
+async def branch(ans: Message):
+    if ans.text.lower() == "назад":
+        await ans( "Выхожу в главное меню", keyboard=keyboard )
+        await bot.branch.exit( ans.peer_id )
+
+    else:
+        bot_chose = random.choice( knb_chose )
+
+        if ans.text == 'Камень' and bot_chose == 'Ножницы' \
+                or ans.text == 'Бумага' and bot_chose == 'Камень' \
+                or ans.text == 'Ножницы' and bot_chose == 'Бумага':
+
+            await ans( f'Вы выиграли!\n\nСоперник выбрал: {bot_chose}', keyboard=keyboard )
+            await bot.branch.exit( ans.peer_id )
+
+        elif ans.text == bot_chose:
+            await ans( f'Ничья.\n\nСоперник выбрал: {bot_chose}', keyboard=keyboard )
+            await bot.branch.exit( ans.peer_id )
+
+        else:
+            await bot.branch.exit( ans.peer_id )
+            await ans( f'Вы проиграли :(\n\nСоперник выбрал: {bot_chose}', keyboard=keyboard )
+
+
+@bot.on.message()
+async def wrapper(ans: Message):
+    await ans( 'Я не понимаю тебя! Воспользуйся кнопками!', keyboard=keyboard )
+
+
+bot.run_polling( skip_updates=False )
